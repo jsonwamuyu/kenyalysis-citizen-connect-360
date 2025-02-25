@@ -1,3 +1,115 @@
+CREATE TYPE user_role AS ENUM ('citizen', 'government_official', 'admin');
+CREATE TYPE incident_status AS ENUM ('submitted', 'in_review', 'resolved', 'closed');
+
+CREATE TABLE Users (
+    user_id SERIAL PRIMARY KEY,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role user_role NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP NULL
+);
+
+CREATE TABLE Incidents (
+    incident_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    category VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    media_url VARCHAR(255),
+    status incident_status NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    assigned_to INT,  -- Foreign Key to Users(user_id) - which official is assigned to this incident
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (assigned_to) REFERENCES Users(user_id) --Can be null if noone is assigned
+);
+
+CREATE TABLE Polls (
+    poll_id SERIAL PRIMARY KEY,
+    question TEXT NOT NULL,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+    created_by INT NOT NULL,
+    category VARCHAR(255),
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (created_by) REFERENCES Users(user_id)
+);
+
+CREATE TABLE Poll_Options (
+  option_id SERIAL PRIMARY KEY,
+  poll_id INT NOT NULL,
+  option_text VARCHAR(255) NOT NULL,
+  FOREIGN KEY (poll_id) REFERENCES Polls(poll_id)
+);
+
+CREATE TABLE Poll_Votes (
+    vote_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    poll_id INT NOT NULL,
+    option_id INT NOT NULL,
+    vote_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (poll_id) REFERENCES Polls(poll_id),
+    FOREIGN KEY (option_id) REFERENCES Poll_Options(option_id)
+);
+
+CREATE TABLE Government_Documents (
+    document_id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    file_url VARCHAR(255) NOT NULL,
+    category VARCHAR(255) NOT NULL,
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Citizen_Feedback (
+    feedback_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    document_id INT,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (document_id) REFERENCES Government_Documents(document_id)
+);
+
+CREATE TABLE Conversation_History (
+    message_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    document_id INT NOT NULL,
+    message TEXT NOT NULL,
+    is_user BOOLEAN NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (document_id) REFERENCES Government_Documents(document_id)
+);
+
+CREATE TABLE Password_Reset_Tokens (
+    token_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    expiry_timestamp TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+
+
+
+
+
+
+
+
+
+
+
 
 
 CREATE TYPE user_role AS ENUM ('citizen', 'government_official', 'admin');
